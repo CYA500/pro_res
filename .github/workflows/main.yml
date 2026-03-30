@@ -19,15 +19,18 @@ jobs:
           flutter-version: '3.19.3'
           channel: 'stable'
 
-      - name: Production Fixes (SDK & Permissions)
+   - name: Production Fixes (SDK & Permissions)
         run: |
-          # تأكد من وجود هيكل أندرويد
-          flutter create . --platforms android
-          # رفع نسخة الـ SDK لضمان عمل الكاميرا والتقنيات الحديثة
+          # إنشاء هيكل أندرويد باستخدام اسم متوافق مع قوانين دارت
+          flutter create --project-name=pro_res . --platforms android
+          
+          # رفع نسخة الـ SDK
           sed -i 's/minSdkVersion .*/minSdkVersion 21/' android/app/build.gradle
-          # السماح بالاتصال المحلي (HTTP/WS)
+          
+          # السماح بالاتصال المحلي
           sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
-          # إضافة تصاريح الإنترنت والكاميرا
+          
+          # إضافة التصاريح
           sed -i '/<\/manifest>/i <uses-permission android:name="android.permission.INTERNET" \/><uses-permission android:name="android.permission.CAMERA" \/>' android/app/src/main/AndroidManifest.xml
 
       - name: Install Project Dependencies
