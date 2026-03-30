@@ -1,0 +1,44 @@
+name: AuraMonitor Ultra Build
+on: [push] # سيبدأ البناء فور رفع أي كود جديد
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.3'
+          channel: 'stable'
+
+      - name: Production Fixes (SDK & Permissions)
+        run: |
+          # تأكد من وجود هيكل أندرويد
+          flutter create . --platforms android
+          # رفع نسخة الـ SDK لضمان عمل الكاميرا والتقنيات الحديثة
+          sed -i 's/minSdkVersion .*/minSdkVersion 21/' android/app/build.gradle
+          # السماح بالاتصال المحلي (HTTP/WS)
+          sed -i 's/<application/<application android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
+          # إضافة تصاريح الإنترنت والكاميرا
+          sed -i '/<\/manifest>/i <uses-permission android:name="android.permission.INTERNET" \/><uses-permission android:name="android.permission.CAMERA" \/>' android/app/src/main/AndroidManifest.xml
+
+      - name: Install Project Dependencies
+        run: flutter pub get
+
+      - name: Build Release APK
+        # استخدام --no-tree-shake-icons لضمان عدم اختفاء الأيقونات
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AuraMonitor-Final-Release
+          path: build/app/outputs/flutter-apk/app-release.apk
